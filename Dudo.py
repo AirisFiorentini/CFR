@@ -47,21 +47,20 @@ class DudoTrainer:
             cN = self.claimNum[doubted]
             cR = self.claimRank[doubted]
             realDoubtedRankQuantity = dice.count(cR) + dice.count(1)
+
             if realDoubtedRankQuantity >= cN:  # как кому посчитать прибыль? >=
-                return -1  # Dudo loses -1,
+                return 1  # Dudo loses -1,
             else:
                 # вычесть
-                return 1  # visa versa  # last stake player loses |actual - claimed|
+                return -1  # last stake player loses |actual - claimed|
 
         infoSet = str(self.infoSetToInt(dice[player], isClaimed))
         # <Get information set node or create it if nonexistent>
         node = self.nodeMap.get(infoSet)
         AfterTrueIndex = self.NUM_ACTIONS - isClaimed[self.NUM_ACTIONS - 1::-1].index(True) if True in isClaimed else 0
-        if node is None:  # count local num_actions
-            # print("Newnode!")
-            # node = Node(13 - AfterTrueIndex, isClaimed, dice[player])  # self.NUM_ACTIONS lower
-            node = Node(13 - AfterTrueIndex if AfterTrueIndex > 0 else 12, isClaimed, dice[player])
-            node.infoSet = infoSet  # infoSetToString
+        if node is None:
+            node = Node(self.NUM_ACTIONS - AfterTrueIndex if AfterTrueIndex > 0 else 12, isClaimed, dice[player])
+            node.infoSet = infoSet
             # output feint with ears
             # node.die = dice[player]
             # node.isClaimed = isClaimed
@@ -71,7 +70,7 @@ class DudoTrainer:
         strategy = node.getStrategy(p0 if player == 0 else p1)
         util = [0.0] * self.NUM_ACTIONS
         nodeUtil = 0
-        for i in range(node.NUM_ACTIONS):   # (min(node.NUM_ACTIONS, self.NUM_ACTIONS - 1)):  # min?!
+        for i in range(node.NUM_ACTIONS):
             nextHistory = isClaimed.copy()
             iter = AfterTrueIndex + i
             # print(self.claimHistoryToString(isClaimed))
@@ -91,11 +90,10 @@ class DudoTrainer:
         return nodeUtil
 
     # Train Dudo
-    def train(self, iterations: int):  # ??????????
+    def train(self, iterations: int):
         util = 0.0
         for i in range(iterations):
             dice = self.rollDice()
-            # print("Dice", dice)
             startClaims = [False] * self.NUM_ACTIONS
             # print(startClaims)
             util += self.cfr(dice, startClaims, 1, 1)
@@ -110,14 +108,15 @@ class DudoTrainer:
         if infoSet in self.nodeMap:
             return self.nodeMap.get(infoSet).toString()
         else:
-            return Node(self.NUM_ACTIONS, [False] * 13).toString()  # change properly
+            return Node(self.NUM_ACTIONS, [False] * 13).toString()  # change properly -1?
 
 
 # DudoTrainer main method
 if __name__ == '__main__':
     blabla = [False, False, False, False, False, True, True, False, False, False, False, False, False]
-    TrainRes = DudoTrainer().train(1000)  # more iterations!
-    print(TrainRes.getNode(6, [False]*13))
-    print(TrainRes.getNode(3, blabla))
+    f_bla = [False] * 13
+    TrainRes = DudoTrainer().train(3000)
+    # print(TrainRes.getNode(6, [False]*13))
+    # print(TrainRes.getNode(3, blabla))
     # for i in range(20):
     #     print(TrainRes.rollDice())
