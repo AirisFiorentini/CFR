@@ -38,11 +38,11 @@ class MNode:
         for k in range(self.NUM_CARDS):
             for a in range(self.NUM_ACTIONS):
                 if normalizingSum[k] > 0:
-                    self.strategy[a] /= normalizingSum[k]
+                    self.strategy[k][a] /= normalizingSum[k]  # ?!
                 else:
                     self.strategy[k][a] = 1.0 / self.NUM_ACTIONS
                 self.strategySum[k][a] += realizationWeight[k] * self.strategy[k][a]
-                # np.dot(realizationWeight, self.strategy)?
+                # np.dot(realizationWeight, self.strategy)? - single value
         return self.strategy
 
     # Get average information set mixed strategy across all training iterations
@@ -112,7 +112,7 @@ class MKuhnTrainer:
                                 is_terminal = True
                                 U[i][j] = 2 if j > i else -2
             if is_terminal:
-                return U
+                return -U
 
         infoSet = history
         # print(history)
@@ -136,21 +136,22 @@ class MKuhnTrainer:
                 util[:, :, a] = -self.m_cfr(nextHistory, p0 * strategy[:, a], p1)
                 # nodeUtil += np.dot(util[:, :, a], strategy[:, a])
                 for i in range(self.NUM_CARDS):
-                    nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
+                    nodeUtil[i, :] += util[i, :, a] * strategy[i, a]  # strategy[i, a]
             else:
                 # util[a] = -self.cfr(cards, nextHistory, p0, p1 * strategy[a])
                 util[:, :, a] = -self.m_cfr(nextHistory, p0, p1 * strategy[:, a])
                 # nodeUtil += np.dot(strategy[:, a], -util[:, :, a])
                 for j in range(self.NUM_CARDS):
-                    nodeUtil[:, j] += strategy[j, a] * util[:, j, a]
+                    nodeUtil[:, j] += util[:, j, a] * strategy[j, a]  # strategy[:, a], -util
 
         # For each action, compute and accumulate counterfactual regret
         for a in range(self.NUM_ACTIONS):
-            regret = util[:, :, a] - nodeUtil
             if player == 0:
+                regret = util[:, :, a] - nodeUtil
                 node.regretSum[:, a] += np.dot(p1, regret)
             else:
-                node.regretSum[:, a] += np.dot(p0, -regret)
+                regret = -util[:, :, a] - nodeUtil
+                node.regretSum[:, a] += np.dot(p0, regret)  # - regret?
         return nodeUtil
 
     # TODO: add differentiation of players' regrets
@@ -176,7 +177,7 @@ class MKuhnTrainer:
 
 if __name__ == '__main__':
     # MKuhnTrainer().one_run()
-    trainer = MKuhnTrainer().train(1000)
+    trainer = MKuhnTrainer().train(10000)
     """
     for i in range(self.NUM_CARDS):
         for j in range(self.NUM_CARDS):
