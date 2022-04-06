@@ -91,6 +91,7 @@ class MKuhnTrainer:
             for i in range(self.NUM_CARDS):
                 for j in range(self.NUM_CARDS):
                     if i != j:
+                        """
                         if player == 0:
                             if terminalPass:
                                 is_terminal = True
@@ -111,11 +112,20 @@ class MKuhnTrainer:
                             elif doubleBet:
                                 is_terminal = True
                                 U[i][j] = 2 if j > i else -2
+                            """
+                        if terminalPass:
+                            is_terminal = True
+                            if history == "pp":
+                                U[i][j] = 1 if i > j else -1  # isPlayerCardHigher[i][j]
+                            else:
+                                U[i][j] = 1
+                        elif doubleBet:
+                            is_terminal = True
+                            U[i][j] = 2 if i > j else -2
             if is_terminal:
-                return -U
+                return U
 
         infoSet = history
-        # print(history)
         # Get information set node or create it if nonexistent
         node = self.nodeMap.get(infoSet)
         if node is None:
@@ -177,9 +187,4 @@ class MKuhnTrainer:
 
 if __name__ == '__main__':
     # MKuhnTrainer().one_run()
-    trainer = MKuhnTrainer().train(10000)
-    """
-    for i in range(self.NUM_CARDS):
-        for j in range(self.NUM_CARDS):
-            if i != j:
-    """
+    trainer = MKuhnTrainer().train(100)
