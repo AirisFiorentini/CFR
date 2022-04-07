@@ -15,10 +15,8 @@ class MNode:
                  NUM_ACTIONS: int,
                  NUM_CARDS: int,
                  NUM_HANDS: int = 2):
-        # dim: num_hands * num_actions
-        self.regretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))  # NUM_HANDS
-        # dim of strategy and strategySum?
-        self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))  # diag(vector  (sigma_i)) NUM_CARDS, NUM_CARDS, NUM_ACTIONS)
+        self.regretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
+        self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.strategySum = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.infoSet = ""
         self.NUM_ACTIONS = NUM_ACTIONS
@@ -55,7 +53,7 @@ class MNode:
                 avgStrategy[k] = 1 / self.NUM_ACTIONS
         return avgStrategy
 
-    # TODO: show the results with i-card
+    # show the results with i-card
     def toString_m(self):  # Get information set string representation
         AvSt = self.getAverageStrategy()
         for i in range(3):
@@ -121,12 +119,10 @@ class MKuhnTrainer:
         for a in range(self.NUM_ACTIONS):
             nextHistory = history + ("p" if a == 0 else "b")
             if player == 0:
-                # util[a] = -self.cfr(cards, nextHistory, p0 * strategy[a], p1)
                 util[:, :, a] = self.m_cfr(nextHistory, p0 * strategy[:, a], p1)
                 for i in range(self.NUM_CARDS):
                     nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
             else:
-                # util[a] = -self.cfr(cards, nextHistory, p0, p1 * strategy[a])
                 util[:, :, a] = self.m_cfr(nextHistory, p0, p1 * strategy[:, a])
                 for j in range(self.NUM_CARDS):
                     nodeUtil[:, j] += util[:, j, a] * strategy[j, a]
@@ -135,10 +131,8 @@ class MKuhnTrainer:
         for a in range(self.NUM_ACTIONS):
             regret = util[:, :, a] - nodeUtil
             if player == 0:
-
                 node.regretSum[:, a] += np.dot(regret, p1)
             else:
-                # regret = -(util[:, :, a] - nodeUtil)
                 node.regretSum[:, a] += np.dot(p0, -regret)
         return nodeUtil
 
@@ -152,7 +146,7 @@ class MKuhnTrainer:
         print(np.sum(agv))
         print("Average game value: ", agv)
         for n in self.nodeMap.values():
-            print(n.toString())
+            print(n.toString_m())
         return self
 
 
