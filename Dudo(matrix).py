@@ -93,16 +93,19 @@ class MDudoTrainer:
         player = plays % 2
         # return payoff for terminal states
         if isClaimed[self.DUDO]:
-            # print("found dudo")
             doubted = self.NUM_ACTIONS - 2 - isClaimed[self.NUM_ACTIONS - 2::-1].index(True)
-            # print("doubted", doubted)
-            cN = self.claimNum[doubted]
-            cR = self.claimRank[doubted]
+            cN = self.claimNum[doubted]  # quantity
+            cR = self.claimRank[doubted]  # value
             realDoubtedRankQuantity = np.zeros((self.NUM_SIDES, self.NUM_SIDES))
             for i in range(self.NUM_SIDES):
                 for j in range(self.NUM_SIDES):
                     dice = [i + 1, j + 1]  # '1' <- 0 in arrays
-                    realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1)
+                    # if cR == 1:
+                    #     realDoubtedRankQuantity[i][j] = dice.count(cR)
+                    # else:
+                    #     realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1)
+                    realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1) if cR != 1 else dice.count(cR)
+
             # print("realDoubtedRankQuantity")
             # print(realDoubtedRankQuantity)
 
@@ -111,16 +114,14 @@ class MDudoTrainer:
             for i in range(self.NUM_SIDES):
                 for j in range(self.NUM_SIDES):
                     if realDoubtedRankQuantity[i][j] >= cN:
-                        if player == 0:
-                            U[i][j] = 1
-                        else:
-                            U[i][j] = -1
+                        # for player #0:
+                        U[i][j] = 1
                     else:
-                        if player == 0:
-                            U[i][j] = -1
-                        else:
-                            U[i][j] = 1
-            return U
+                        U[i][j] = -1
+            if player == 1:
+                return -U
+            else:
+                return U
             # if realDoubtedRankQuantity >= cN:  # как кому посчитать прибыль? >=
             #     return 1  # Dudo loses -1,
             # else:
@@ -197,7 +198,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(50)
+    TrainRes = MDudoTrainer().train(250)
     startClaims = [False] * 13
     startClaims[2] = True
 
