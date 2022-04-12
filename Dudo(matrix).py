@@ -196,10 +196,17 @@ class MDudoTrainer:
         else:
             return MDudoNode(self.NUM_ACTIONS, [False] * 13).toString()
 
+    def getNodeStrategy(self, die: int, isClaimed: List[bool]) -> str:
+        infoSet = str(self.infoSetToInt(isClaimed))
+        if infoSet in self.nodeMap:
+            return self.nodeMap.get(infoSet).strategy[die - 1]
+        else:
+            return "Not found"
+
 
 if __name__ == '__main__':
     TrainRes = MDudoTrainer().train(250)
+
     startClaims = [False] * 13
     startClaims[2] = True
-
-    print(TrainRes.getNode(startClaims))
+    print(TrainRes.getNodeStrategy(2, startClaims))

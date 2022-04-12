@@ -4,6 +4,24 @@ from typing import List
 from main import Node
 
 
+# TODO: implement DudoNode instead of Node
+"""
+class DudoNode(Node):
+    def __init__(self,
+                 NUM_ACTIONS: int,
+                 isClaimed: List[bool],
+                 die=0
+                 ):
+        self.regretSum = [0.0] * NUM_ACTIONS
+        self.strategy = [0.0] * NUM_ACTIONS
+        self.strategySum = [0.0] * NUM_ACTIONS
+        self.infoSet = ""
+        self.NUM_ACTIONS = NUM_ACTIONS
+        # for output Dudo
+        self.die = die
+        self.isClaimed = isClaimed
+"""
+
 class DudoTrainer:
     def __init__(self):  # Dudo definitions
         # Dudo definitions of 2 6-sided dice
@@ -46,8 +64,11 @@ class DudoTrainer:
             # print("doubted", doubted)
             cN = self.claimNum[doubted]
             cR = self.claimRank[doubted]
-            realDoubtedRankQuantity = dice.count(cR) + dice.count(1)
-
+            # TODO: check realDoubtedRankQuantity
+            # realDoubtedRankQuantity = dice.count(cR) + dice.count(1)
+            realDoubtedRankQuantity = dice.count(cR) + dice.count(1) if cR != 1 else dice.count(cR)
+            if realDoubtedRankQuantity > 2:
+                print(realDoubtedRankQuantity)
             if realDoubtedRankQuantity >= cN:  # как кому посчитать прибыль? >=
                 return 1  # Dudo loses -1,
             else:
@@ -93,6 +114,8 @@ class DudoTrainer:
     def train(self, iterations: int):
         util = 0.0
         for i in range(iterations):
+            if i % 100 == 0:
+                print(i)
             dice = self.rollDice()
             startClaims = [False] * self.NUM_ACTIONS
             # print(startClaims)
@@ -115,7 +138,9 @@ class DudoTrainer:
 if __name__ == '__main__':
     blabla = [False, False, False, False, False, True, True, False, False, False, False, False, False]
     f_bla = [False] * 13
-    TrainRes = DudoTrainer().train(3000)
+    iterations = 3000
+    print("The number of iterations: ", iterations)
+    TrainRes = DudoTrainer().train(iterations)
     # print(TrainRes.getNode(6, [False]*13))
     # print(TrainRes.getNode(3, blabla))
     # for i in range(20):
