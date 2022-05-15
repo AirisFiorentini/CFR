@@ -5,7 +5,7 @@ from Kuhn_s_poker_matrix_v import MNode
 
 
 class MDudoNode(MNode):
-    # TODO:
+    # TODO: inheritance
     def __init__(self, NUM_ACTIONS: int, isClaimed: List[bool], NUM_SIDES: int = 6, NUM_HANDS: int = 2):
         self.regretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.strategy = np.zeros((NUM_SIDES, NUM_ACTIONS))
@@ -60,8 +60,7 @@ class MDudoTrainer:
         self.claimNum = ([1] * 6) + ([2] * 6)
         self.claimRank = [2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1]
 
-    # TODO: convert a boolean massive to a integer (binary nums)
-    # convert Dudo information set to an integer
+    # convert Dudo information set to an integer (binary nums)
     def infoSetToInt(self, isClaimed: List[bool]) -> int:
         str_num = ''
         for i in range(len(isClaimed)):
@@ -110,7 +109,7 @@ class MDudoTrainer:
             # print(realDoubtedRankQuantity)
 
             U = np.zeros((self.NUM_SIDES, self.NUM_SIDES))
-            # TODO: decide payoffs: +1 || -1 for the first player (only!)
+            # payoffs: +1 || -1 for the first player (only!)
             for i in range(self.NUM_SIDES):
                 for j in range(self.NUM_SIDES):
                     if realDoubtedRankQuantity[i][j] >= cN:
@@ -178,6 +177,7 @@ class MDudoTrainer:
             print("iteration: ", i + 1)
             startClaims = [False] * self.NUM_ACTIONS
             util += self.m_cfr(startClaims, np.array([1] * 6), np.array([1] * 6))
+        print("The number of iterations: ", iterations)
         agv = util / iterations / 36
         print(np.sum(agv))
         print(agv)
@@ -205,7 +205,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(250)
+    TrainRes = MDudoTrainer().train(500)
 
     startClaims = [False] * 13
     startClaims[2] = True
