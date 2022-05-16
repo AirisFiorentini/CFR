@@ -186,7 +186,7 @@ class MDudoTrainer:
         # # for n in self.nodeMap.values():  # print cards + history
         # #     print(n.die, self.claimHistoryToString(n.isClaimed), n.toString(), sep='|')
         # #     print()
-        return self
+        return self, np.sum(agv)
 
     # TODO: describe a node
     def getNode(self, isClaimed: List[bool]) -> str:
@@ -205,7 +205,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(500)
+    TrainRes, _ = MDudoTrainer().train(500)
 
     startClaims = [False] * 13
     startClaims[2] = True
