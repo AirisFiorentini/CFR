@@ -16,11 +16,8 @@ class MNode:
                  NUM_ACTIONS: int,
                  NUM_CARDS: int,
                  NUM_HANDS: int = 2):
-        # TODO: keep positive and negative regrets separately
         self.positiveRegretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.negativeRegretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
-        # TODO: multiply cumulative regrets by factors(alpha, beta)
-        # TODO: use the sum of 2 parts for counting regrets
         # self.regretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))  # self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.strategySum = np.zeros((NUM_CARDS, NUM_ACTIONS))
@@ -30,7 +27,6 @@ class MNode:
         self.NUM_HANDS = NUM_HANDS
 
     # Get current information set mixed strategy through regret-matching
-    # TODO: add gamma-factor
     def getStrategy(self,
                     iter_n: int,
                     gamma: float,
@@ -40,7 +36,6 @@ class MNode:
 
         regretSum = self.positiveRegretSum + self.negativeRegretSum
         t = 2 * iter_n + active_player_n + 1
-        # TODO: check the default meaning for _gamma
         _gamma = (t / (t + 1)) ** gamma
         regretSum *= _gamma
 
@@ -143,7 +138,7 @@ class MKuhnTrainer:
             self.nodeMap.put(infoSet, node)
 
         # For each action, recursively call m_cfr with additional history and probability
-        # TODO: check getSt
+
         strategy = node.getStrategy(iter, gamma, p0 if player == 0 else p1, player, curr_player_n)
         util = np.zeros((self.NUM_CARDS, self.NUM_CARDS, self.NUM_ACTIONS))
         nodeUtil = np.zeros((self.NUM_CARDS, self.NUM_CARDS))
@@ -162,14 +157,27 @@ class MKuhnTrainer:
         # refresh only current player regret if it's their move
         if curr_player_n == player:
             t = 2 * iter + player + 1
-            # TODO: check the default meaning for _alpha, _beta
-            _alpha = t ** alpha / (t ** alpha + 1)
-            _beta = t ** beta / (t ** beta + 1)
+
+            if math.isinf(alpha):
+                _alpha = 1
+            else:
+                _alpha = t ** alpha / (t ** alpha + 1)
+            if math.isinf(beta):
+                _beta = 1
+            else:
+                _beta = t ** beta / (t ** beta + 1)
+
+            # _alpha = t ** alpha / (t ** alpha + 1)
+            # _beta = t ** beta / (t ** beta + 1)
+            #
+            # if math.isnan(_alpha):
+            #     _alpha = 1
+            # if math.isnan(_beta):
+            #     _beta = 1
             for a in range(self.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
                 node.negativeRegretSum *= _beta
 
-                # TODO: divide regret into positive(alpha) and negative(beta) parts
                 regret = util[:, :, a] - nodeUtil
                 # r_new = regret * p_n
                 if player == 0:
@@ -192,7 +200,7 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(iterations):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 3/2, 0, 2)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, math.inf, -math.inf, 2)
                 # CFR+: math.inf, -math.inf, 2
         agv = util / 2 / iterations / 6  # average game value
         print(np.sum(agv))
@@ -203,4 +211,4 @@ class MKuhnTrainer:
 
 
 if __name__ == '__main__':
-    trainer = MKuhnTrainer().train(4000)  # -0.055268931065872995, gamma -0.0555214015541389
+    trainer = MKuhnTrainer().train(1500)
