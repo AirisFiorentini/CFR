@@ -30,6 +30,7 @@ class MDudoNode:
         regretSum = self.positiveRegretSum + self.negativeRegretSum
         t = 2 * iter_n + active_player_n + 1
         _gamma = (t / (t + 1)) ** gamma
+        # print("gamma", _gamma)
         regretSum *= _gamma
 
         normalizingSum = np.zeros(self.NUM_SIDES)
@@ -103,9 +104,9 @@ class MDudoTrainer:
                p0: np.ndarray,
                p1: np.ndarray,
                curr_player_n: int,
-               alpha: float = 1,
-               beta: float = 1,
-               gamma: float = 1) -> np.ndarray:  # history -> isClaimed
+               alpha: float,
+               beta: float,
+               gamma: float) -> np.ndarray:  # history -> isClaimed
 
         plays = isClaimed.count(True)
         player = plays % 2
@@ -154,11 +155,13 @@ class MDudoTrainer:
             nextHistory[iter] = True
             # print("Next history ", nextHistory)
             if player == 0:
-                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0 * strategy[:, a], p1, curr_player_n)
+                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0 * strategy[:, a], p1, curr_player_n,
+                                            alpha, beta, gamma)
                 for i in range(self.NUM_SIDES):
                     nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
             else:
-                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0, p1 * strategy[:, a], curr_player_n)
+                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0, p1 * strategy[:, a], curr_player_n,
+                                            alpha, beta, gamma)
                 for j in range(self.NUM_SIDES):
                     nodeUtil[:, j] += util[:, j, a] * strategy[j, a]
 
@@ -174,6 +177,7 @@ class MDudoTrainer:
                 _beta = 1
             else:
                 _beta = t ** beta / (t ** beta + 1)
+            # print("alpha, beta:", _alpha, _beta, sep=',')
 
             for a in range(node.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
@@ -200,7 +204,7 @@ class MDudoTrainer:
             for player in range(2):
                 startClaims = [False] * self.NUM_ACTIONS
                 util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), player,
-                                    1, 1, 1)
+                                    math.inf, -math.inf, 2)
                 # util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), 1, math.inf, -math.inf, 2)
         print("The number of iterations: ", iterations)
         agv = util / iterations / 2 / 36
@@ -230,7 +234,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(100)
+    TrainRes = MDudoTrainer().train(500)
     # TrainRes1 = MDudoTrainer().train(500)
     # TrainRes = MDudoTrainer().train(750)
     # TrainRes = MDudoTrainer().train(1000)

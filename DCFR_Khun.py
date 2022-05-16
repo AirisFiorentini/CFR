@@ -145,11 +145,13 @@ class MKuhnTrainer:
         for a in range(self.NUM_ACTIONS):
             nextHistory = history + ("p" if a == 0 else "b")
             if player == 0:
-                util[:, :, a] = self.m_dcfr(iter, nextHistory, p0 * strategy[:, a], p1, curr_player_n)
+                util[:, :, a] = self.m_dcfr(iter, nextHistory, p0 * strategy[:, a], p1, curr_player_n,
+                                            alpha, beta, gamma)
                 for i in range(self.NUM_CARDS):
                     nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
             else:
-                util[:, :, a] = self.m_dcfr(iter, nextHistory, p0, p1 * strategy[:, a], curr_player_n)
+                util[:, :, a] = self.m_dcfr(iter, nextHistory, p0, p1 * strategy[:, a], curr_player_n,
+                                            alpha, beta, gamma)
                 for j in range(self.NUM_CARDS):
                     nodeUtil[:, j] += util[:, j, a] * strategy[j, a]
 
@@ -200,7 +202,7 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(iterations):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1.5, 0, 2)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, math.inf, -math.inf, 4)
                 # CFR+: math.inf, -math.inf, 2
         agv = util / 2 / iterations / 6  # average game value
         print(np.sum(agv))
