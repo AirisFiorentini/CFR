@@ -39,6 +39,10 @@ class MNode:
                     curr_player_n: int) -> np.ndarray:
 
         regretSum = self.positiveRegretSum + self.negativeRegretSum
+        t = 2 * iter_n + active_player_n
+        _gamma = (t / (t + 1)) ** gamma
+        regretSum *= _gamma
+
         normalizingSum = np.zeros(self.NUM_CARDS)
 
         for k in range(self.NUM_CARDS):
@@ -196,4 +200,4 @@ class MKuhnTrainer:
 
 
 if __name__ == '__main__':
-    trainer = MKuhnTrainer().train(1600)  # -0.055268931065872995
+    trainer = MKuhnTrainer().train(1000)  # -0.055268931065872995, gamma -0.0555214015541389
