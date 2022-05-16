@@ -39,7 +39,8 @@ class MNode:
                     curr_player_n: int) -> np.ndarray:
 
         regretSum = self.positiveRegretSum + self.negativeRegretSum
-        t = 2 * iter_n + active_player_n
+        t = 2 * iter_n + active_player_n + 1
+        # TODO: check the default meaning for _gamma
         _gamma = (t / (t + 1)) ** gamma
         regretSum *= _gamma
 
@@ -160,7 +161,8 @@ class MKuhnTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            t = 2 * iter + player
+            t = 2 * iter + player + 1
+            # TODO: check the default meaning for _alpha, _beta
             _alpha = t ** alpha / (t ** alpha + 1)
             _beta = t ** beta / (t ** beta + 1)
             for a in range(self.NUM_ACTIONS):
@@ -190,7 +192,8 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(iterations):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 3/2, 0, 2)
+                # CFR+: math.inf, -math.inf, 2
         agv = util / 2 / iterations / 6  # average game value
         print(np.sum(agv))
         print("Average game value: ", agv)
@@ -200,4 +203,4 @@ class MKuhnTrainer:
 
 
 if __name__ == '__main__':
-    trainer = MKuhnTrainer().train(1000)  # -0.055268931065872995, gamma -0.0555214015541389
+    trainer = MKuhnTrainer().train(4000)  # -0.055268931065872995, gamma -0.0555214015541389
