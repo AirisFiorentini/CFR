@@ -200,7 +200,7 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(iterations):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, math.inf, -math.inf, 2)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1.5, 0, 2)
                 # CFR+: math.inf, -math.inf, 2
         agv = util / 2 / iterations / 6  # average game value
         print(np.sum(agv))

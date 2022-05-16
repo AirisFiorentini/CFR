@@ -120,6 +120,7 @@ class DudoTrainer:
             startClaims = [False] * self.NUM_ACTIONS
             # print(startClaims)
             util += self.cfr(dice, startClaims, 1, 1)
+        print("The number of iterations: ", iterations)
         print("Average game value: ", util / iterations)
         # for n in self.nodeMap.values():  # print cards + history
         #     print(n.die, self.claimHistoryToString(n.isClaimed), n.toString(), sep='|')
@@ -138,8 +139,7 @@ class DudoTrainer:
 if __name__ == '__main__':
     blabla = [False, False, False, False, False, True, True, False, False, False, False, False, False]
     f_bla = [False] * 13
-    iterations = 3000
-    print("The number of iterations: ", iterations)
+    iterations = 4000
     TrainRes = DudoTrainer().train(iterations)
     # print(TrainRes.getNode(6, [False]*13))
     # print(TrainRes.getNode(3, blabla))

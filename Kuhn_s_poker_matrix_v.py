@@ -151,4 +151,4 @@ class MKuhnTrainer:
 
 
 if __name__ == '__main__':
-    trainer = MKuhnTrainer().train(1000)
+    trainer = MKuhnTrainer().train(1000)  # -0.05549781766637257

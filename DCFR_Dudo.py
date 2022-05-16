@@ -2,12 +2,14 @@ import numpy as np
 from pytreemap import TreeMap
 from typing import List
 # from Kuhn_s_poker_matrix_v import MNode
-
+import math
 
 class MDudoNode:
     # TODO: inheritance
     def __init__(self, NUM_ACTIONS: int, isClaimed: List[bool], NUM_SIDES: int = 6, NUM_HANDS: int = 2):
-        self.regretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
+        # self.regretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
+        self.positiveRegretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
+        self.negativeRegretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.strategy = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.strategySum = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.infoSet = ""
@@ -19,15 +21,22 @@ class MDudoNode:
 
     # Get current information set mixed strategy through regret-matching
     def getStrategy(self,
+                    iter_n: int,
+                    gamma: float,
                     realizationWeight: np.ndarray,
                     active_player_n: int,
                     curr_player_n: int
                     ) -> np.ndarray:
 
+        regretSum = self.positiveRegretSum + self.negativeRegretSum
+        t = 2 * iter_n + active_player_n + 1
+        _gamma = (t / (t + 1)) ** gamma
+        regretSum *= _gamma
+
         normalizingSum = np.zeros(self.NUM_SIDES)
         for k in range(self.NUM_SIDES):
             for a in range(self.NUM_ACTIONS):
-                self.strategy[k][a] = self.regretSum[k][a] if self.regretSum[k][a] > 0 else 0
+                self.strategy[k][a] = regretSum[k][a] if regretSum[k][a] > 0 else 0
                 normalizingSum[k] += self.strategy[k][a]
         for k in range(self.NUM_SIDES):
             for a in range(self.NUM_ACTIONS):
@@ -89,11 +98,16 @@ class MDudoTrainer:
 
     # info set node class definitions (m_node class)
     # Counterfactual regret minimization iteration
-    def m_cfr(self,
-              isClaimed: List[bool],
-              p0: np.ndarray,
-              p1: np.ndarray,
-              curr_player_n: int) -> np.ndarray:  # history -> isClaimed
+    def m_dcfr(self,
+               iter_n: int,
+               isClaimed: List[bool],
+               p0: np.ndarray,
+               p1: np.ndarray,
+               curr_player_n: int,
+               alpha: float = 1,
+               beta: float = 1,
+               gamma: float = 1) -> np.ndarray:  # history -> isClaimed
+
         plays = isClaimed.count(True)
         player = plays % 2
         # return payoff for terminal states
@@ -105,21 +119,14 @@ class MDudoTrainer:
             for i in range(self.NUM_SIDES):
                 for j in range(self.NUM_SIDES):
                     dice = [i + 1, j + 1]  # '1' <- 0 in arrays
-                    # if cR == 1:
-                    #     realDoubtedRankQuantity[i][j] = dice.count(cR)
-                    # else:
-                    #     realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1)
                     realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1) if cR != 1 else dice.count(cR)
-
-            # print("realDoubtedRankQuantity")
-            # print(realDoubtedRankQuantity)
 
             U = np.zeros((self.NUM_SIDES, self.NUM_SIDES))
             # payoffs: +1 || -1 for the first player (only!)
             for i in range(self.NUM_SIDES):
                 for j in range(self.NUM_SIDES):
                     if realDoubtedRankQuantity[i][j] >= cN:
-                        # for player #0:
+
                         U[i][j] = 1
                     else:
                         U[i][j] = -1
@@ -127,11 +134,7 @@ class MDudoTrainer:
                 return -U
             else:
                 return U
-            # if realDoubtedRankQuantity >= cN:  # как кому посчитать прибыль? >=
-            #     return 1  # Dudo loses -1,
-            # else:
-            #     # вычесть
-            #     return -1  # last stake player loses |actual - claimed|
+
 
         infoSet = str(self.infoSetToInt(isClaimed))
         # <Get information set node or create it if nonexistent>
@@ -143,7 +146,7 @@ class MDudoTrainer:
             self.nodeMap.put(infoSet, node)
 
         # For each action, recursively call cfr with additional history and probability
-        strategy = node.getStrategy(p0 if player == 0 else p1, player, curr_player_n)
+        strategy = node.getStrategy(iter_n, gamma, p0 if player == 0 else p1, player, curr_player_n)
         util = np.zeros((self.NUM_SIDES, self.NUM_SIDES, self.NUM_ACTIONS))
         nodeUtil = np.zeros((self.NUM_SIDES, self.NUM_SIDES))
         for a in range(node.NUM_ACTIONS):
@@ -154,27 +157,45 @@ class MDudoTrainer:
             if player == 0:
                 # util[i] = -self.cfr(dice, nextHistory, p0 * strategy[i], p1)
                 # print("p0 * st", p0 * strategy[:, a])
-                util[:, :, a] = self.m_cfr(nextHistory, p0 * strategy[:, a], p1, curr_player_n)
+                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0 * strategy[:, a], p1, curr_player_n)
                 for i in range(self.NUM_SIDES):
                     nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
             else:
                 # util[i] = -self.cfr(dice, nextHistory, p0, p1 * strategy[i])
                 # print("p1 * st", p1 * strategy[:, a])
-                util[:, :, a] = self.m_cfr(nextHistory, p0, p1 * strategy[:, a], curr_player_n)
+                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0, p1 * strategy[:, a], curr_player_n)
                 for j in range(self.NUM_SIDES):
                     nodeUtil[:, j] += util[:, j, a] * strategy[j, a]
 
         # For each action, compute and accumulate counterfactual regret
-        # TODO: check the active player
         # refresh only current player regret if it's their move
         if curr_player_n == player:
+            t = 2 * iter_n + player + 1
+            if math.isinf(alpha) and alpha > 0:
+                _alpha = 1
+            else:
+                _alpha = t ** alpha / (t ** alpha + 1)
+            if math.isinf(beta) and beta > 0:
+                _beta = 1
+            else:
+                _beta = t ** beta / (t ** beta + 1)
+
             # print("changing regret")
             for a in range(node.NUM_ACTIONS):
+                node.positiveRegretSum *= _alpha
+                node.negativeRegretSum *= _beta
                 regret = util[:, :, a] - nodeUtil
                 if player == 0:
-                    node.regretSum[:, a] += np.dot(regret, p1)
+                    r_new = np.dot(regret, p1)
                 else:
-                    node.regretSum[:, a] += np.dot(p0, -regret)
+                    r_new = np.dot(p0, -regret)
+                r_new_sign = r_new >= 0
+
+                for i in range(node.NUM_SIDES):
+                    if r_new_sign[i]:
+                        node.positiveRegretSum[i, a] += r_new[i]
+                    else:
+                        node.negativeRegretSum[i, a] += r_new[i]
         return nodeUtil
 
     def train(self,
@@ -183,8 +204,10 @@ class MDudoTrainer:
         for i in range(iterations):
             print("iteration: ", i + 1)
             startClaims = [False] * self.NUM_ACTIONS
-            util += self.m_cfr(startClaims, np.array([1] * 6), np.array([1] * 6), 0)
-            util += self.m_cfr(startClaims, np.array([1] * 6), np.array([1] * 6), 1)
+            for player in range(2):
+                util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6),
+                                    player, math.inf, -math.inf, 2)
+            #util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), 1)
         print("The number of iterations: ", iterations)
         agv = util / iterations / 2 / 36
         print(np.sum(agv))
@@ -213,10 +236,10 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(200)
+    TrainRes = MDudoTrainer().train(50)
     # TrainRes1 = MDudoTrainer().train(500)
     # TrainRes = MDudoTrainer().train(750)
     # TrainRes = MDudoTrainer().train(1000)
-    startClaims = [False] * 13
-    startClaims[2] = True
-    print(TrainRes.getNodeStrategy(2, startClaims))
+    # startClaims = [False] * 13
+    # startClaims[2] = True
+    # print(TrainRes.getNodeStrategy(2, startClaims))

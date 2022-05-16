@@ -10,7 +10,11 @@ from typing import List
 
 class Node:  # унаследовать класс
     # Kuhn node definitions
-    def __init__(self, NUM_ACTIONS: int, isClaimed: List[bool], die=0):
+    # TODO: remove dudo defs
+    def __init__(self,
+                 NUM_ACTIONS: int,
+                 isClaimed: List[bool],
+                 die=0):
         self.regretSum = [0.0] * NUM_ACTIONS
         self.strategy = [0.0] * NUM_ACTIONS
         self.strategySum = [0.0] * NUM_ACTIONS
@@ -21,7 +25,8 @@ class Node:  # унаследовать класс
         self.isClaimed = isClaimed
 
     # Get current information set mixed strategy through regret-matching
-    def getStrategy(self, realizationWeight: float) -> List[float]:
+    def getStrategy(self,
+                    realizationWeight: float) -> List[float]:
         normalizingSum = 0.0
         for a in range(self.NUM_ACTIONS):
             self.strategy[a] = self.regretSum[a] if self.regretSum[a] > 0 else 0
@@ -131,11 +136,11 @@ class KuhnTrainer:
 
 
 if __name__ == '__main__':
-    KuhnTrainer().train(100)
-    # Kt = KuhnTrainer()
+    KuhnTrainer().train(100000)
+    Kt = KuhnTrainer()
     # Kt.onerun([3, 2, 1])
     # Kt.onerun([3, 1, 2])
-    # Kt.onerun([1, 2, 3])
+    Kt.onerun([1, 2, 3])
     # Kt.onerun([2, 1, 3])
     # Kt.onerun([1, 3, 2])
     # Kt.onerun([2, 3, 1])
