@@ -3,6 +3,7 @@ from pytreemap import TreeMap
 from typing import List
 # from Kuhn_s_poker_matrix_v import MNode
 import math
+import utils
 
 class MDudoNode:
     # TODO: inheritance
@@ -206,6 +207,8 @@ class MDudoTrainer:
 
     def train(self,
               iterations: int = 100):
+        results = []
+        eps = 0.001
         util = np.zeros((6, 6))
         for i in range(iterations):
             print("iteration: ", i + 1)
@@ -215,6 +218,14 @@ class MDudoTrainer:
                                     1.5, 0, 2)
                                     # math.inf, -math.inf, 2)
                 # util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), 1, math.inf, -math.inf, 2)
+                cur_res = np.sum(util / iterations / 36 / 2)
+                if (i + 1) % 10 == 0:
+                    # cur_res = np.sum(util / iterations / 36)
+                    results.append(cur_res)
+                if abs(cur_res - (-7 / 258)) < eps:
+                    results.append(cur_res)
+                    break
+        utils.save_result_to_file(results, "Dudo_m_v_simple")
         print("The number of iterations: ", iterations)
         agv = util / iterations / 2 / 36
         print(np.sum(agv))
@@ -243,7 +254,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(1000)
+    TrainRes = MDudoTrainer().train(2000)
     # TrainRes1 = MDudoTrainer().train(500)
     # TrainRes = MDudoTrainer().train(750)
     # TrainRes = MDudoTrainer().train(1000)
