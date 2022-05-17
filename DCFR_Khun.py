@@ -37,7 +37,9 @@ class MNode:
         regretSum = self.positiveRegretSum + self.negativeRegretSum
         t = 2 * iter_n + active_player_n + 1
         _gamma = (t / (t + 1)) ** gamma
-        regretSum *= _gamma
+        if active_player_n == curr_player_n:
+            self.strategySum *= _gamma
+        #regretSum *= _gamma
 
         normalizingSum = np.zeros(self.NUM_CARDS)
 
@@ -51,7 +53,8 @@ class MNode:
                     self.strategy[k][a] /= normalizingSum[k]
                 else:
                     self.strategy[k][a] = 1.0 / self.NUM_ACTIONS
-                if active_player_n != curr_player_n:
+                # != ???
+                if active_player_n == curr_player_n:
                     self.strategySum[k][a] += realizationWeight[k] * self.strategy[k][a]
         return self.strategy
 
@@ -202,8 +205,9 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(iterations):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, math.inf, -math.inf, 4)
-                # CFR+: math.inf, -math.inf, 2
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1.5, 0, 2)
+                # CFR+: math.inf, -math.inf, 2: 1500 // -0.055552097912113935
+                # 1.5, 0, 2: 1500                   //-0.055527798514633075
         agv = util / 2 / iterations / 6  # average game value
         print(np.sum(agv))
         print("Average game value: ", agv)
@@ -213,4 +217,4 @@ class MKuhnTrainer:
 
 
 if __name__ == '__main__':
-    trainer = MKuhnTrainer().train(1500)
+    trainer = MKuhnTrainer().train(10000)
