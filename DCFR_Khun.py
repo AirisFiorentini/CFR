@@ -28,18 +28,18 @@ class MNode:
 
     # Get current information set mixed strategy through regret-matching
     def getStrategy(self,
-                    iter_n: int,
+                    t: int,
                     gamma: float,
                     realizationWeight: np.ndarray,
                     active_player_n: int,
                     curr_player_n: int) -> np.ndarray:
 
         regretSum = self.positiveRegretSum + self.negativeRegretSum
-        t = 2 * iter_n + active_player_n + 1
+        # t = 2 * iter_n + active_player_n + 1
+
         _gamma = (t / (t + 1)) ** gamma
         if active_player_n == curr_player_n:
             self.strategySum *= _gamma
-        #regretSum *= _gamma
 
         normalizingSum = np.zeros(self.NUM_CARDS)
 
@@ -53,7 +53,6 @@ class MNode:
                     self.strategy[k][a] /= normalizingSum[k]
                 else:
                     self.strategy[k][a] = 1.0 / self.NUM_ACTIONS
-                # != ???
                 if active_player_n == curr_player_n:
                     self.strategySum[k][a] += realizationWeight[k] * self.strategy[k][a]
         return self.strategy
@@ -99,7 +98,7 @@ class MKuhnTrainer:
     # Information set node class definition (node class above)
     # Counterfactual regret minimization iteration
     def m_dcfr(self,
-               iter: int,
+               iter_n: int,
                history: str,
                p0: np.ndarray,
                p1: np.ndarray,
@@ -142,18 +141,18 @@ class MKuhnTrainer:
 
         # For each action, recursively call m_cfr with additional history and probability
 
-        strategy = node.getStrategy(iter, gamma, p0 if player == 0 else p1, player, curr_player_n)
+        strategy = node.getStrategy(iter_n, gamma, p0 if player == 0 else p1, player, curr_player_n)
         util = np.zeros((self.NUM_CARDS, self.NUM_CARDS, self.NUM_ACTIONS))
         nodeUtil = np.zeros((self.NUM_CARDS, self.NUM_CARDS))
         for a in range(self.NUM_ACTIONS):
             nextHistory = history + ("p" if a == 0 else "b")
             if player == 0:
-                util[:, :, a] = self.m_dcfr(iter, nextHistory, p0 * strategy[:, a], p1, curr_player_n,
+                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0 * strategy[:, a], p1, curr_player_n,
                                             alpha, beta, gamma)
                 for i in range(self.NUM_CARDS):
                     nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
             else:
-                util[:, :, a] = self.m_dcfr(iter, nextHistory, p0, p1 * strategy[:, a], curr_player_n,
+                util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0, p1 * strategy[:, a], curr_player_n,
                                             alpha, beta, gamma)
                 for j in range(self.NUM_CARDS):
                     nodeUtil[:, j] += util[:, j, a] * strategy[j, a]
@@ -161,16 +160,16 @@ class MKuhnTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            t = 2 * iter + player + 1
+            #t = 2 * iter + player + 1
 
             if math.isinf(alpha):
                 _alpha = 1
             else:
-                _alpha = t ** alpha / (t ** alpha + 1)
+                _alpha = iter_n ** alpha / (iter_n ** alpha + 1)
             if math.isinf(beta):
                 _beta = 1
             else:
-                _beta = t ** beta / (t ** beta + 1)
+                _beta = iter_n ** beta / (iter_n ** beta + 1)
 
             # _alpha = t ** alpha / (t ** alpha + 1)
             # _beta = t ** beta / (t ** beta + 1)
@@ -203,11 +202,13 @@ class MKuhnTrainer:
     def train(self,
               iterations: int):
         util = np.zeros((3, 3))
-        for i in range(iterations):
+        # TODO: check i, iter, iter_n
+        for i in range(1, iterations + 1):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1.5, 0, 2)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1, 1, 1)
                 # CFR+: math.inf, -math.inf, 2: 1500 // -0.055552097912113935
                 # 1.5, 0, 2: 1500                   //-0.055527798514633075
+                # 1, 1, 1
         agv = util / 2 / iterations / 6  # average game value
         print(np.sum(agv))
         print("Average game value: ", agv)

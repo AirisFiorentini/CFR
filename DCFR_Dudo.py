@@ -22,23 +22,17 @@ class MDudoNode:
 
     # Get current information set mixed strategy through regret-matching
     def getStrategy(self,
-                    iter_n: int,
+                    t: int,
                     gamma: float,
                     realizationWeight: np.ndarray,
                     active_player_n: int,
                     curr_player_n: int) -> np.ndarray:
-        t = 2 * iter_n + active_player_n + 1
+
         _gamma = (t / (t + 1)) ** gamma
         if active_player_n == curr_player_n:
             self.strategySum *= _gamma
-        # print("gamma", _gamma)
-        # TODO: check _gamma use
-        # regretSum *= _gamma
-
-        # self.positiveRegretSum *=
 
         regretSum = self.positiveRegretSum + self.negativeRegretSum
-
         normalizingSum = np.zeros(self.NUM_SIDES)
         for k in range(self.NUM_SIDES):
             for a in range(self.NUM_ACTIONS):
@@ -52,9 +46,8 @@ class MDudoNode:
                 else:
                     self.strategy[k][a] = 1.0 / self.NUM_ACTIONS
                 # refresh only for the current player
-                if active_player_n == curr_player_n:  # != ???
+                if active_player_n == curr_player_n:
                     self.strategySum[k][a] += realizationWeight[k] * self.strategy[k][a]
-
         return self.strategy
 
     # Get average information set mixed strategy across all training iterations
@@ -177,7 +170,8 @@ class MDudoTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            t = 2 * iter_n + player + 1
+            #t = 2 * iter_n + player + 1
+            t = iter_n
             if math.isinf(alpha) and alpha > 0:
                 _alpha = 1
             else:
@@ -211,16 +205,20 @@ class MDudoTrainer:
         eps = 0.00025
         util = np.zeros((6, 6))
         # exit = False
-        for i in range(iterations):
-            print("iteration: ", i + 1)
+
+        for i in range(1, iterations + 1):
+            print("iteration: ", i)
             for player in range(2):
                 startClaims = [False] * self.NUM_ACTIONS
                 util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), player,
                                     1, 1, 1)
                                     # math.inf, -math.inf, 2)
+                # CFR+: math.inf, -math.inf, 2
+                # 1.5, 0, 2: 1500
+                # 1, 1, 1
                 # util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), 1, math.inf, -math.inf, 2)
             cur_res = np.sum(util / iterations / 36 / 2)
-            if (i + 1) % 10 == 0:
+            if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
             if abs(cur_res - (-7 / 258)) < eps:
