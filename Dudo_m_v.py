@@ -88,6 +88,7 @@ class MDudoTrainer:
               isClaimed: List[bool],
               p0: np.ndarray,
               p1: np.ndarray) -> np.ndarray:  # history -> isClaimed
+
         plays = isClaimed.count(True)
         player = plays % 2
         # return payoff for terminal states
@@ -99,14 +100,7 @@ class MDudoTrainer:
             for i in range(self.NUM_SIDES):
                 for j in range(self.NUM_SIDES):
                     dice = [i + 1, j + 1]  # '1' <- 0 in arrays
-                    # if cR == 1:
-                    #     realDoubtedRankQuantity[i][j] = dice.count(cR)
-                    # else:
-                    #     realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1)
                     realDoubtedRankQuantity[i][j] = dice.count(cR) + dice.count(1) if cR != 1 else dice.count(cR)
-
-            # print("realDoubtedRankQuantity")
-            # print(realDoubtedRankQuantity)
 
             U = np.zeros((self.NUM_SIDES, self.NUM_SIDES))
             # payoffs: +1 || -1 for the first player (only!)
@@ -121,11 +115,6 @@ class MDudoTrainer:
                 return -U
             else:
                 return U
-            # if realDoubtedRankQuantity >= cN:  # как кому посчитать прибыль? >=
-            #     return 1  # Dudo loses -1,
-            # else:
-            #     # вычесть
-            #     return -1  # last stake player loses |actual - claimed|
 
         infoSet = str(self.infoSetToInt(isClaimed))
         # <Get information set node or create it if nonexistent>
@@ -144,29 +133,21 @@ class MDudoTrainer:
             nextHistory = isClaimed.copy()
             iter = AfterTrueIndex + a
             nextHistory[iter] = True
-            # print("Next history ", nextHistory)
             if player == 0:
-                # util[i] = -self.cfr(dice, nextHistory, p0 * strategy[i], p1)
-                # print("p0 * st", p0 * strategy[:, a])
                 util[:, :, a] = self.m_cfr(nextHistory, p0 * strategy[:, a], p1)
                 for i in range(self.NUM_SIDES):
                     nodeUtil[i, :] += util[i, :, a] * strategy[i, a]
             else:
-                # util[i] = -self.cfr(dice, nextHistory, p0, p1 * strategy[i])
-                # print("p1 * st", p1 * strategy[:, a])
                 util[:, :, a] = self.m_cfr(nextHistory, p0, p1 * strategy[:, a])
                 for j in range(self.NUM_SIDES):
                     nodeUtil[:, j] += util[:, j, a] * strategy[j, a]
 
         # For each action, compute and accumulate counterfactual regret
         for a in range(node.NUM_ACTIONS):  # self.NUM_ACTIONS
-            # print(self.NUM_ACTIONS)
             regret = util[:, :, a] - nodeUtil
             if player == 0:
-                # print(node.regretSum[:, a])
                 node.regretSum[:, a] += np.dot(regret, p1)
             else:
-                # print(a, "1", p0, -regret)
                 node.regretSum[:, a] += np.dot(p0, -regret)
         return nodeUtil
 
@@ -175,13 +156,12 @@ class MDudoTrainer:
         results = []
         eps = 0.001
         util = np.zeros((6, 6))
-        for i in range(iterations):
-            print("iteration: ", i + 1)
+        for i in range(1, iterations + 1):
+            print("iteration: ", i)
             startClaims = [False] * self.NUM_ACTIONS
             util += self.m_cfr(startClaims, np.array([1] * 6), np.array([1] * 6))
             cur_res = np.sum(util / iterations / 36)
             if (i + 1) % 10 == 0:
-                # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
             if abs(cur_res - (-7/258)) < eps:
                 results.append(cur_res)
@@ -189,9 +169,9 @@ class MDudoTrainer:
 
         utils.save_result_to_file(results, "Dudo_m_v_simple")
         print("The number of iterations: ", iterations)
+        print(np.sum(util / iterations / 36))
         agv = util / iterations / 36
-        print(np.sum(agv))
-        print(agv)
+        # print(agv)
 
 
         # # for n in self.nodeMap.values():  # print cards + history

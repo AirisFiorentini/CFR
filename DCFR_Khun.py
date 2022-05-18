@@ -18,8 +18,7 @@ class MNode:
                  NUM_HANDS: int = 2):
         self.positiveRegretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.negativeRegretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
-        # self.regretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
-        self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))  # self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))
+        self.strategy = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.strategySum = np.zeros((NUM_CARDS, NUM_ACTIONS))
         self.infoSet = ""
         self.NUM_ACTIONS = NUM_ACTIONS
@@ -35,14 +34,12 @@ class MNode:
                     curr_player_n: int) -> np.ndarray:
 
         regretSum = self.positiveRegretSum + self.negativeRegretSum
-        # t = 2 * iter_n + active_player_n + 1
 
         _gamma = (t / (t + 1)) ** gamma
         if active_player_n == curr_player_n:
             self.strategySum *= _gamma
 
         normalizingSum = np.zeros(self.NUM_CARDS)
-
         for k in range(self.NUM_CARDS):
             for a in range(self.NUM_ACTIONS):
                 self.strategy[k][a] = regretSum[k][a] if regretSum[k][a] > 0 else 0
@@ -122,7 +119,7 @@ class MKuhnTrainer:
                         if i != j:
                             if terminalPass:
                                 if history == "pp":
-                                    U[i][j] = 1 if i > j else -1  # isPlayerCardHigher[i][j]
+                                    U[i][j] = 1 if i > j else -1
                                 elif history == 'bp':
                                     U[i][j] = 1
                                 else:  # pbp
@@ -140,7 +137,6 @@ class MKuhnTrainer:
             self.nodeMap.put(infoSet, node)
 
         # For each action, recursively call m_cfr with additional history and probability
-
         strategy = node.getStrategy(iter_n, gamma, p0 if player == 0 else p1, player, curr_player_n)
         util = np.zeros((self.NUM_CARDS, self.NUM_CARDS, self.NUM_ACTIONS))
         nodeUtil = np.zeros((self.NUM_CARDS, self.NUM_CARDS))
@@ -160,37 +156,26 @@ class MKuhnTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            #t = 2 * iter + player + 1
-
-            if math.isinf(alpha):
+            if math.isinf(alpha) and alpha > 0:
                 _alpha = 1
             else:
                 _alpha = iter_n ** alpha / (iter_n ** alpha + 1)
-            if math.isinf(beta):
+            if math.isinf(beta) and beta > 0:
                 _beta = 1
             else:
                 _beta = iter_n ** beta / (iter_n ** beta + 1)
 
-            # _alpha = t ** alpha / (t ** alpha + 1)
-            # _beta = t ** beta / (t ** beta + 1)
-            #
-            # if math.isnan(_alpha):
-            #     _alpha = 1
-            # if math.isnan(_beta):
-            #     _beta = 1
             for a in range(self.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
                 node.negativeRegretSum *= _beta
 
                 regret = util[:, :, a] - nodeUtil
-                # r_new = regret * p_n
                 if player == 0:
                     r_new = np.dot(regret, p1)
                 else:
                     r_new = np.dot(p0, -regret)
                 r_new_sign = r_new >= 0
 
-                # self.positiveRegretSum = np.zeros((NUM_CARDS, NUM_ACTIONS))
                 for i in range(node.NUM_CARDS):
                     if r_new_sign[i]:
                         node.positiveRegretSum[i, a] += r_new[i]
@@ -202,7 +187,6 @@ class MKuhnTrainer:
     def train(self,
               iterations: int):
         util = np.zeros((3, 3))
-        # TODO: check i, iter, iter_n
         for i in range(1, iterations + 1):
             for player_n in range(2):
                 util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1, 1, 1)

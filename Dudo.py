@@ -64,12 +64,8 @@ class DudoTrainer:
             # print("doubted", doubted)
             cN = self.claimNum[doubted]
             cR = self.claimRank[doubted]
-            # TODO: check realDoubtedRankQuantity
-            # realDoubtedRankQuantity = dice.count(cR) + dice.count(1)
             realDoubtedRankQuantity = dice.count(cR) + dice.count(1) if cR != 1 else dice.count(cR)
-            if realDoubtedRankQuantity > 2:
-                print(realDoubtedRankQuantity)
-            if realDoubtedRankQuantity >= cN:  # как кому посчитать прибыль? >=
+            if realDoubtedRankQuantity >= cN:
                 return 1  # Dudo loses -1,
             else:
                 # вычесть
@@ -94,11 +90,7 @@ class DudoTrainer:
         for i in range(node.NUM_ACTIONS):
             nextHistory = isClaimed.copy()
             iter = AfterTrueIndex + i
-            # print(self.claimHistoryToString(isClaimed))
-            # print(node.isClaimed)
-            # print(i, iter, nextHistory)
             nextHistory[iter] = True
-            # print(self.NUM_ACTIONS - i)
             if player == 0:
                 util[i] = -self.cfr(dice, nextHistory, p0 * strategy[i], p1)
             else:
@@ -118,7 +110,6 @@ class DudoTrainer:
                 print(i)
             dice = self.rollDice()
             startClaims = [False] * self.NUM_ACTIONS
-            # print(startClaims)
             util += self.cfr(dice, startClaims, 1, 1)
         print("The number of iterations: ", iterations)
         print("Average game value: ", util / iterations)

@@ -8,7 +8,6 @@ import utils
 class MDudoNode:
     # TODO: inheritance
     def __init__(self, NUM_ACTIONS: int, isClaimed: List[bool], NUM_SIDES: int = 6, NUM_HANDS: int = 2):
-        # self.regretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.positiveRegretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.negativeRegretSum = np.zeros((NUM_SIDES, NUM_ACTIONS))
         self.strategy = np.zeros((NUM_SIDES, NUM_ACTIONS))
@@ -155,7 +154,6 @@ class MDudoTrainer:
             nextHistory = isClaimed.copy()
             iter = AfterTrueIndex + a
             nextHistory[iter] = True
-            # print("Next history ", nextHistory)
             if player == 0:
                 util[:, :, a] = self.m_dcfr(iter_n, nextHistory, p0 * strategy[:, a], p1, curr_player_n,
                                             alpha, beta, gamma)
@@ -170,7 +168,6 @@ class MDudoTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            #t = 2 * iter_n + player + 1
             t = iter_n
             if math.isinf(alpha) and alpha > 0:
                 _alpha = 1
@@ -180,7 +177,6 @@ class MDudoTrainer:
                 _beta = 1
             else:
                 _beta = t ** beta / (t ** beta + 1)
-            # print("alpha, beta:", _alpha, _beta, sep=',')
 
             for a in range(node.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
@@ -202,7 +198,7 @@ class MDudoTrainer:
     def train(self,
               iterations: int = 100):
         results = []
-        eps = 0.00025
+        eps = 0.0005
         util = np.zeros((6, 6))
         # exit = False
 
@@ -211,8 +207,7 @@ class MDudoTrainer:
             for player in range(2):
                 startClaims = [False] * self.NUM_ACTIONS
                 util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), player,
-                                    1, 1, 1)
-                                    # math.inf, -math.inf, 2)
+                                    1.5, 0, 2)
                 # CFR+: math.inf, -math.inf, 2
                 # 1.5, 0, 2: 1500
                 # 1, 1, 1
@@ -221,22 +216,19 @@ class MDudoTrainer:
             if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
+                utils.save_result_to_file(results, "Dudo_dcfr")
             if abs(cur_res - (-7 / 258)) < eps:
                 results.append(cur_res)
                 # exit = True
                 break
             # if exit:
             #     break
-        utils.save_result_to_file(results, "Dudo_dcfr111")
+
         print("The number of iterations: ", iterations)
         agv = util / iterations / 2 / 36
         print(np.sum(agv))
         print(agv)
 
-
-        # # for n in self.nodeMap.values():  # print cards + history
-        # #     print(n.die, self.claimHistoryToString(n.isClaimed), n.toString(), sep='|')
-        # #     print()
         return self
 
     # TODO: describe a node
@@ -256,10 +248,8 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(10000)
-    # TrainRes1 = MDudoTrainer().train(500)
-    # TrainRes = MDudoTrainer().train(750)
-    # TrainRes = MDudoTrainer().train(1000)
+    TrainRes = MDudoTrainer().train(20000)
+
     # startClaims = [False] * 13
     # startClaims[2] = True
     # print(TrainRes.getNodeStrategy(2, startClaims))
