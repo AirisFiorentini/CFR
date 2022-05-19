@@ -198,9 +198,8 @@ class MDudoTrainer:
     def train(self,
               iterations: int = 100):
         results = []
-        eps = 0.0005
+        # eps = 0.0005
         util = np.zeros((6, 6))
-        # exit = False
 
         for i in range(1, iterations + 1):
             print("iteration: ", i)
@@ -216,13 +215,11 @@ class MDudoTrainer:
             if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
-                utils.save_result_to_file(results, "Dudo_dcfr")
-            if abs(cur_res - (-7 / 258)) < eps:
-                results.append(cur_res)
-                # exit = True
-                break
-            # if exit:
+                utils.save_result_to_file(results, i, "Dudo_dcfr")
+            # if abs(cur_res - (-7 / 258)) < eps:
+            #     results.append(cur_res)
             #     break
+
 
         print("The number of iterations: ", iterations)
         agv = util / iterations / 2 / 36
@@ -248,7 +245,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(20000)
+    TrainRes = MDudoTrainer().train(30000)
 
     # startClaims = [False] * 13
     # startClaims[2] = True
