@@ -105,7 +105,7 @@ class MDudoTrainer:
         elif math.isinf(phi) and phi < 0:
             return 0
         else:
-            return iter_n ** phi / (iter_n ** phi + 1)
+            return (iter_n ** phi) / (iter_n ** phi + 1)
 
     # info set node class definitions (m_node class)
     # Counterfactual regret minimization iteration
@@ -180,7 +180,6 @@ class MDudoTrainer:
         if curr_player_n == player:
             _alpha = self.count_param(alpha, iter_n)
             _beta = self.count_param(beta, iter_n)
-
             for a in range(node.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
                 node.negativeRegretSum *= _beta
@@ -218,7 +217,7 @@ class MDudoTrainer:
             if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
-                utils.save_result_to_file(results, "Dudo_dcfr")
+        utils.save_result_to_file(results, "Dudo_dcfr")
             # if abs(cur_res - (-7 / 258)) < eps:
             #     results.append(cur_res)
             #     break

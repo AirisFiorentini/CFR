@@ -100,7 +100,7 @@ class MKuhnTrainer:
         elif math.isinf(phi) and phi < 0:
             return 0
         else:
-            return iter_n ** phi / (iter_n ** phi + 1)
+            return (iter_n ** phi) / (iter_n ** phi + 1)
 
     # Information set node class definition (node class above)
     # Counterfactual regret minimization iteration
@@ -110,9 +110,9 @@ class MKuhnTrainer:
                p0: np.ndarray,
                p1: np.ndarray,
                curr_player_n: int,
-               alpha: float = 1,
-               beta: float = 1,
-               gamma: float = 1) -> np.ndarray:  # curr_player_n - the number of player, which we count regrets for
+               alpha: float,
+               beta: float,
+               gamma: float) -> np.ndarray:  # curr_player_n - the number of player, which we count regrets for
 
         plays = len(history)
         player = plays % 2  # active player
@@ -168,6 +168,7 @@ class MKuhnTrainer:
         if curr_player_n == player:
             _alpha = self.count_param(alpha, iter_n)
             _beta = self.count_param(beta, iter_n)
+            # print(_alpha, _beta)
             # if math.isinf(alpha) and alpha > 0:
             #     _alpha = 1
             # else:
@@ -201,7 +202,8 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(1, iterations + 1):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, math.inf, -math.inf, 2)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n,
+                                    math.inf, -math.inf, 2)
                 # CFR+: math.inf, -math.inf, 2: 1500 // -0.055552097912113935
                 # 1.5, 0, 2: 1500                   //-0.055527798514633075
                 # 1, 1, 1
@@ -214,4 +216,4 @@ class MKuhnTrainer:
 
 
 if __name__ == '__main__':
-    trainer = MKuhnTrainer().train(10000)
+    trainer = MKuhnTrainer().train(5000)
