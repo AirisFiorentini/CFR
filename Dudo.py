@@ -1,7 +1,7 @@
 import random
 from pytreemap import TreeMap
 from typing import List
-from main import Node
+from Kuhn_s_poker import Node
 
 
 # TODO: implement DudoNode instead of Node

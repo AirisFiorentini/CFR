@@ -200,15 +200,14 @@ class MDudoTrainer:
     def train(self,
               iterations: int = 100):
         results = []
-        # eps = 0.0005
         util = np.zeros((6, 6))
-
         for i in range(1, iterations + 1):
             print("iteration: ", i)
             for player in range(2):
                 startClaims = [False] * self.NUM_ACTIONS
                 util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), player,
                                     math.inf, -math.inf, 2)
+                # TODO: call exploitability counting here for the opponent
                 # CFR+: math.inf, -math.inf, 2
                 # 1.5, 0, 2: 1500
                 # 1, 1, 1
