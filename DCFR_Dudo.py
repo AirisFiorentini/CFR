@@ -97,6 +97,16 @@ class MDudoTrainer:
                 sb += str(self.claimRank[a])
         return sb
 
+    def count_param(self,
+                    phi: float,
+                    iter_n: int) -> float:
+        if math.isinf(phi) and phi > 0:
+            return 1
+        elif math.isinf(phi) and phi < 0:
+            return 0
+        else:
+            return iter_n ** phi / (iter_n ** phi + 1)
+
     # info set node class definitions (m_node class)
     # Counterfactual regret minimization iteration
     def m_dcfr(self,
@@ -168,15 +178,8 @@ class MDudoTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            t = iter_n
-            if math.isinf(alpha) and alpha > 0:
-                _alpha = 1
-            else:
-                _alpha = t ** alpha / (t ** alpha + 1)
-            if math.isinf(beta) and beta > 0:
-                _beta = 1
-            else:
-                _beta = t ** beta / (t ** beta + 1)
+            _alpha = self.count_param(alpha, iter_n)
+            _beta = self.count_param(beta, iter_n)
 
             for a in range(node.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
@@ -206,7 +209,7 @@ class MDudoTrainer:
             for player in range(2):
                 startClaims = [False] * self.NUM_ACTIONS
                 util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), player,
-                                    1.5, 0, 2)
+                                    math.inf, -math.inf, 2)
                 # CFR+: math.inf, -math.inf, 2
                 # 1.5, 0, 2: 1500
                 # 1, 1, 1
@@ -215,7 +218,7 @@ class MDudoTrainer:
             if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
-                utils.save_result_to_file(results, i, "Dudo_dcfr")
+                utils.save_result_to_file(results, "Dudo_dcfr")
             # if abs(cur_res - (-7 / 258)) < eps:
             #     results.append(cur_res)
             #     break

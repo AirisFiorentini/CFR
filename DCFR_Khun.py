@@ -92,6 +92,16 @@ class MKuhnTrainer:
     def is_terminal(self, history: str) -> bool:
         return history in ['bp', 'bb', 'pp', 'pbb', 'pbp']
 
+    def count_param(self,
+                    phi: float,
+                    iter_n: int) -> float:
+        if math.isinf(phi) and phi > 0:
+            return 1
+        elif math.isinf(phi) and phi < 0:
+            return 0
+        else:
+            return iter_n ** phi / (iter_n ** phi + 1)
+
     # Information set node class definition (node class above)
     # Counterfactual regret minimization iteration
     def m_dcfr(self,
@@ -156,14 +166,16 @@ class MKuhnTrainer:
         # For each action, compute and accumulate counterfactual regret
         # refresh only current player regret if it's their move
         if curr_player_n == player:
-            if math.isinf(alpha) and alpha > 0:
-                _alpha = 1
-            else:
-                _alpha = iter_n ** alpha / (iter_n ** alpha + 1)
-            if math.isinf(beta) and beta > 0:
-                _beta = 1
-            else:
-                _beta = iter_n ** beta / (iter_n ** beta + 1)
+            _alpha = self.count_param(alpha, iter_n)
+            _beta = self.count_param(beta, iter_n)
+            # if math.isinf(alpha) and alpha > 0:
+            #     _alpha = 1
+            # else:
+            #     _alpha = iter_n ** alpha / (iter_n ** alpha + 1)
+            # if math.isinf(beta) and beta > 0:
+            #     _beta = 1
+            # else:
+            #     _beta = iter_n ** beta / (iter_n ** beta + 1)
 
             for a in range(self.NUM_ACTIONS):
                 node.positiveRegretSum *= _alpha
@@ -189,7 +201,7 @@ class MKuhnTrainer:
         util = np.zeros((3, 3))
         for i in range(1, iterations + 1):
             for player_n in range(2):
-                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, 1, 1, 1)
+                util += self.m_dcfr(i, "", np.array([1] * 3), np.array([1] * 3), player_n, math.inf, -math.inf, 2)
                 # CFR+: math.inf, -math.inf, 2: 1500 // -0.055552097912113935
                 # 1.5, 0, 2: 1500                   //-0.055527798514633075
                 # 1, 1, 1
