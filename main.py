@@ -123,7 +123,7 @@ class KuhnTrainer:
         for n in self.nodeMap.values():
             print(n.toString())
 
-    def onerun(self, cards):
+    def one_run(self, cards):
         self.cfr(cards, "", 1, 1)
         print()
         for n in self.nodeMap.values():
@@ -136,17 +136,5 @@ class KuhnTrainer:
 
 
 if __name__ == '__main__':
-    KuhnTrainer().train(100000)
-    Kt = KuhnTrainer()
-    # Kt.onerun([3, 2, 1])
-    # Kt.onerun([3, 1, 2])
-    Kt.onerun([1, 2, 3])
-    # Kt.onerun([2, 1, 3])
-    # Kt.onerun([1, 3, 2])
-    # Kt.onerun([2, 3, 1])
-    # Kt.onerun([3, 2, 1])
-    # Kt.onerun([3, 1, 2])
-    # Kt.onerun([1, 2, 3])
-    # Kt.onerun([2, 1, 3])
-    # Kt.onerun([1, 3, 2])
-    # Kt.onerun([2, 3, 1])
+    KuhnTrainer().train(10000)
+

@@ -213,11 +213,11 @@ class MDudoTrainer:
                 # 1.5, 0, 2: 1500
                 # 1, 1, 1
                 # util += self.m_dcfr(i, startClaims, np.array([1] * 6), np.array([1] * 6), 1, math.inf, -math.inf, 2)
-            cur_res = np.sum(util / iterations / 36 / 2)
+            cur_res = np.sum(util / i / 36 / 2)
             if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
-        utils.save_result_to_file(results, "Dudo_dcfr")
+        utils.save_result_to_file(results)
             # if abs(cur_res - (-7 / 258)) < eps:
             #     results.append(cur_res)
             #     break
@@ -247,7 +247,7 @@ class MDudoTrainer:
 
 
 if __name__ == '__main__':
-    TrainRes = MDudoTrainer().train(30000)
+    TrainRes = MDudoTrainer().train(200)
 
     # startClaims = [False] * 13
     # startClaims[2] = True
