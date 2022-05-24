@@ -216,11 +216,7 @@ class MDudoTrainer:
             if i % 10 == 0:
                 # cur_res = np.sum(util / iterations / 36)
                 results.append(cur_res)
-        utils.save_result_to_file(results)
-            # if abs(cur_res - (-7 / 258)) < eps:
-            #     results.append(cur_res)
-            #     break
-
+        utils.save_result_to_file(results, "DCFR_Dudo")
 
         print("The number of iterations: ", iterations)
         agv = util / iterations / 2 / 36
